@@ -5,39 +5,48 @@ defmodule SensorHub.Application do
 
   use Application
 
+  alias SensorHub.Sensor
+
   def start(_type, _args) do
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
+    System.cmd("epmd", ["-daemon"])
+    [:hostname, host_name] = Application.get_env(:mdns_lite, :host)
+    Node.start(:"hub@#{host_name}.local")
+
     opts = [strategy: :one_for_one, name: SensorHub.Supervisor]
 
-    children =
-      [
-        # Children for all targets
-        # Starts a worker by calling: SensorHub.Worker.start_link(arg)
-        # {SensorHub.Worker, arg},
-      ] ++ children(target())
+    children = [] ++ children(target())
 
     Supervisor.start_link(children, opts)
   end
 
-  # List all child processes to be supervised
   def children(:host) do
-    [
-      # Children that only run on the host
-      # Starts a worker by calling: SensorHub.Worker.start_link(arg)
-      # {SensorHub.Worker, arg},
-    ]
+    []
   end
 
   def children(_target) do
     [
-      # Children for all targets except host
-      # Starts a worker by calling: SensorHub.Worker.start_link(arg)
-      # {SensorHub.Worker, arg},
+      {SGP30, []},
+      {BMP280, [i2c_address: 0x77, name: BMP280]},
+      {Veml6030, %{}},
+      broadcaster(),
+      {Phoenix.PubSub.Supervisor, [name: SensorHub.PubSub]}
     ]
   end
 
   def target() do
     Application.get_env(:sensor_hub, :target)
+  end
+
+  # Pub/Sub broadcasting config
+  defp sensors do
+    [Sensor.new(BMP280), Sensor.new(VEML6030), Sensor.new(SGP30)]
+  end
+
+  defp broadcaster_pubsub do
+    %{topic: "measurements", server: SensorHub.PubSub}
+  end
+
+  defp broadcaster do
+    {Broadcaster, %{sensors: sensors(), pubsub: broadcaster_pubsub()}}
   end
 end

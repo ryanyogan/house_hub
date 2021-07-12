@@ -36,7 +36,11 @@ defmodule SensorHub.MixProject do
       {:ring_logger, "~> 0.8.1"},
       {:toolshed, "~> 0.2.13"},
       {:phoenix_pubsub, "~> 2.0"},
-      {:circuits_i2c, "~> 0.1"},
+      {:circuits_i2c, "~> 0.3.8"},
+      {:sgp30, "~> 0.2"},
+      {:bmp280, "~> 0.2"},
+      {:veml6030, path: "../veml6030"},
+      {:broadcaster, path: "../broadcaster"},
 
       # Dependencies for all targets except :host
       {:nerves_runtime, "~> 0.11.3", targets: @all_targets},
@@ -58,8 +62,6 @@ defmodule SensorHub.MixProject do
   def release do
     [
       overwrite: true,
-      # Erlang distribution is not started automatically.
-      # See https://hexdocs.pm/nerves_pack/readme.html#erlang-distribution
       cookie: "#{@app}_cookie",
       include_erts: &Nerves.Release.erts/0,
       steps: [&Nerves.Release.init/1, :assemble],

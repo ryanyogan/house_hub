@@ -25,7 +25,7 @@ defmodule SensorHub.Application do
 
   def children(_target) do
     [
-      {SGP30, []},
+      # {SGP30, []}, The sensor seems to be getting bad reads
       {BMP280, [i2c_address: 0x77, name: BMP280]},
       {Veml6030, %{}},
       broadcaster(),
@@ -39,7 +39,8 @@ defmodule SensorHub.Application do
 
   # Pub/Sub broadcasting config
   defp sensors do
-    [Sensor.new(BMP280), Sensor.new(VEML6030), Sensor.new(SGP30)]
+    [Sensor.new(BMP280), Sensor.new(VEML6030)]
+    # Sensor.new(SGP30)
   end
 
   defp broadcaster_pubsub do
